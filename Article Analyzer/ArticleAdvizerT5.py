@@ -1,7 +1,7 @@
 import tensorflow as tf
 from transformers import T5Tokenizer, TFT5ForConditionalGeneration, T5Config
 
-class ArticleAdvizer:
+class T5ArticleAdvizer:
     def __init__(self, model_name="t5-base"):
         self.tokenizer = T5Tokenizer.from_pretrained(model_name)
         self.config = T5Config.from_pretrained(model_name)
