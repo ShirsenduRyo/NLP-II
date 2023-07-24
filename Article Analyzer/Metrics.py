@@ -8,6 +8,11 @@ class SummaryMetrics:
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.model = BertForMaskedLM.from_pretrained('bert-base-uncased')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+    def _longest_common_subsequence(self, reference_tokens, candidate_tokens):
+        reference_set = set(reference_tokens)
+        common_tokens = [token for token in candidate_tokens if token in reference_set]
+        return len(common_tokens)
 
     def rouge_n(self, reference, candidate, n):
         reference_tokens = nltk.word_tokenize(reference.lower())
@@ -20,11 +25,21 @@ class SummaryMetrics:
     def rouge_l(self, reference, candidate):
         reference_tokens = nltk.word_tokenize(reference.lower())
         candidate_tokens = nltk.word_tokenize(candidate.lower())
-        reference_length = len(reference_tokens)
-        candidate_length = len(candidate_tokens)
-        lcs = nltk.lcs.lcs(reference_tokens, candidate_tokens)
-        return len(lcs) / max(reference_length, candidate_length)
-	
+
+        # Calculate the LCS length
+        lcs_length = self._longest_common_subsequence(reference_tokens, candidate_tokens)
+
+        precision = lcs_length / max(len(reference_tokens), 1)
+        recall = lcs_length / max(len(candidate_tokens), 1)
+
+        # Handling division by zero for precision or recall
+        if precision == 0 or recall == 0:
+            f1_score = 0.0
+        else:
+            f1_score = 2 * (precision * recall) / (precision + recall)
+
+        return f1_score
+
     def rouge_s(self, reference, candidate):
         reference_tokens = set(nltk.word_tokenize(reference.lower()))
         candidate_tokens = set(nltk.word_tokenize(candidate.lower()))
